@@ -7,7 +7,8 @@ A standalone space exploration quiz built with plain HTML, CSS, and JavaScript. 
 - Ten multiple-choice questions about space
 - Live score and progress tracking
 - Animated feedback for correct and incorrect answers
-- A results screen with a score-based reaction
+- A results screen with a score-based reaction and review of missed answers
+- A clear all-correct message for perfect scores
 - Light and dark themes that follow the system preference
 - Keyboard-accessible controls and reduced-motion support
 
