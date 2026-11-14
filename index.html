@@ -363,6 +363,14 @@
     }
     .final-score strong { color: var(--text); font-size: 2.5rem; letter-spacing: -.06em; }
     .result-track { margin: 0 0 25px; }
+    .answer-review { margin: 30px 0 25px; padding-top: 25px; border-top: 1px solid var(--line); }
+    .answer-review h2 { margin-bottom: 16px; }
+    .review-message { margin-bottom: 0; color: var(--good); font-weight: 700; }
+    .review-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+    .review-item { padding: 15px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-raised); }
+    .review-item h3 { margin: 0 0 9px; font-size: 1rem; line-height: 1.35; }
+    .review-item p { margin: 5px 0 0; color: var(--muted); font-size: .9rem; }
+    .review-item strong { color: var(--text); }
     .footer-note { margin: 16px 0 0; color: var(--muted); font-size: .78rem; text-align: center; }
 
     @keyframes shake {
@@ -440,6 +448,11 @@
       <div class="progress-track result-track" role="img" aria-label="Final score">
         <div class="progress-fill" id="result-fill"></div>
       </div>
+      <section class="answer-review" aria-labelledby="review-title">
+        <h2 id="review-title">Missed answers</h2>
+        <p class="review-message hidden" id="review-message"></p>
+        <ol class="review-list" id="review-list"></ol>
+      </section>
       <button class="primary" id="play-again" type="button">Play again <span aria-hidden="true">↻</span></button>
     </section>
     <p class="footer-note">Made for curious minds, somewhere on Earth 🌍</p>
@@ -473,12 +486,14 @@
     const nextButton = document.querySelector("#next-button");
     let questionIndex = 0;
     let score = 0;
+    let missedAnswers = [];
     let selectedIndex = null;
     let answered = false;
 
     function startQuiz() {
       questionIndex = 0;
       score = 0;
+      missedAnswers = [];
       welcome.classList.add("hidden");
       results.classList.add("hidden");
       quiz.classList.remove("hidden");
@@ -546,6 +561,12 @@
         } else {
           buttons[selectedIndex].classList.add("wrong");
           buttons[question.correct].classList.add("correct");
+          missedAnswers.push({
+            question: question.text,
+            selectedAnswer: question.answers[selectedIndex],
+            correctAnswer: question.answers[question.correct],
+            fact: question.fact
+          });
           feedback.textContent = `Not quite. ${question.fact}`;
           feedback.classList.add("bad");
         }
@@ -570,6 +591,35 @@
       results.classList.remove("hidden");
       document.querySelector("#final-score").textContent = score;
       document.querySelector("#result-fill").style.width = `${(score / questions.length) * 100}%`;
+      const reviewMessage = document.querySelector("#review-message");
+      const reviewList = document.querySelector("#review-list");
+      reviewList.replaceChildren();
+      if (missedAnswers.length === 0) {
+        reviewMessage.textContent = "Perfect score — every answer was correct. No missed answers to review.";
+        reviewMessage.classList.remove("hidden");
+      } else {
+        reviewMessage.textContent = "";
+        reviewMessage.classList.add("hidden");
+        missedAnswers.forEach(missedAnswer => {
+          const item = document.createElement("li");
+          item.className = "review-item";
+          const question = document.createElement("h3");
+          question.textContent = missedAnswer.question;
+          item.append(question);
+          [
+            ["Your answer", missedAnswer.selectedAnswer],
+            ["Correct answer", missedAnswer.correctAnswer],
+            ["Fact", missedAnswer.fact]
+          ].forEach(([label, value]) => {
+            const detail = document.createElement("p");
+            const heading = document.createElement("strong");
+            heading.textContent = `${label}: `;
+            detail.append(heading, document.createTextNode(value));
+            item.append(detail);
+          });
+          reviewList.append(item);
+        });
+      }
 
       let emoji;
       let title;
