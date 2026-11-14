@@ -229,6 +229,26 @@
       outline-offset: 3px;
     }
 
+    .shuffle-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 20px;
+      font-weight: 650;
+    }
+
+    .shuffle-option input {
+      width: 20px;
+      height: 20px;
+      margin: 0;
+      accent-color: var(--accent-strong);
+    }
+
+    .shuffle-option input:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+
     .primary {
       display: inline-flex;
       align-items: center;
@@ -417,6 +437,10 @@
         <span class="mission-icon" aria-hidden="true">🚀</span>
         <span><strong>10 questions · No time limit</strong>Pick the best answer and see how far you can travel.</span>
       </div>
+      <div class="shuffle-option">
+        <input id="shuffle-questions" type="checkbox">
+        <label for="shuffle-questions">Shuffle question order</label>
+      </div>
       <button class="primary" id="start-button" type="button">Start exploring <span aria-hidden="true">→</span></button>
     </section>
 
@@ -484,14 +508,26 @@
     const answersElement = document.querySelector("#answers");
     const feedback = document.querySelector("#feedback");
     const nextButton = document.querySelector("#next-button");
+    const shuffleQuestionsCheckbox = document.querySelector("#shuffle-questions");
     let questionIndex = 0;
+    let currentQuestions = questions;
     let score = 0;
     let missedAnswers = [];
     let selectedIndex = null;
     let answered = false;
 
+    function createShuffledQuestions() {
+      const shuffledQuestions = [...questions];
+      for (let index = shuffledQuestions.length - 1; index > 0; index -= 1) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [shuffledQuestions[index], shuffledQuestions[randomIndex]] = [shuffledQuestions[randomIndex], shuffledQuestions[index]];
+      }
+      return shuffledQuestions;
+    }
+
     function startQuiz() {
       questionIndex = 0;
+      currentQuestions = shuffleQuestionsCheckbox.checked ? createShuffledQuestions() : questions;
       score = 0;
       missedAnswers = [];
       welcome.classList.add("hidden");
@@ -502,12 +538,12 @@
     }
 
     function renderQuestion() {
-      const question = questions[questionIndex];
+      const question = currentQuestions[questionIndex];
       selectedIndex = null;
       answered = false;
-      questionCount.textContent = `Question ${questionIndex + 1} of ${questions.length}`;
+      questionCount.textContent = `Question ${questionIndex + 1} of ${currentQuestions.length}`;
       scoreDisplay.textContent = `★ ${score} ${score === 1 ? "point" : "points"}`;
-      progressFill.style.width = `${(questionIndex / questions.length) * 100}%`;
+      progressFill.style.width = `${(questionIndex / currentQuestions.length) * 100}%`;
       progress.setAttribute("aria-valuenow", questionIndex);
       questionTopic.textContent = question.topic;
       questionText.textContent = question.text;
@@ -546,7 +582,7 @@
       if (selectedIndex === null) return;
       if (!answered) {
         answered = true;
-        const question = questions[questionIndex];
+        const question = currentQuestions[questionIndex];
         const buttons = [...answersElement.querySelectorAll(".answer")];
         buttons.forEach(button => {
           button.disabled = true;
@@ -571,14 +607,14 @@
           feedback.classList.add("bad");
         }
         scoreDisplay.textContent = `★ ${score} ${score === 1 ? "point" : "points"}`;
-        progressFill.style.width = `${((questionIndex + 1) / questions.length) * 100}%`;
+        progressFill.style.width = `${((questionIndex + 1) / currentQuestions.length) * 100}%`;
         progress.setAttribute("aria-valuenow", questionIndex + 1);
-        nextButton.textContent = questionIndex === questions.length - 1 ? "See results" : "Next question";
+        nextButton.textContent = questionIndex === currentQuestions.length - 1 ? "See results" : "Next question";
         return;
       }
 
       questionIndex += 1;
-      if (questionIndex < questions.length) {
+      if (questionIndex < currentQuestions.length) {
         renderQuestion();
         questionText.focus();
       } else {
@@ -590,7 +626,7 @@
       quiz.classList.add("hidden");
       results.classList.remove("hidden");
       document.querySelector("#final-score").textContent = score;
-      document.querySelector("#result-fill").style.width = `${(score / questions.length) * 100}%`;
+      document.querySelector("#result-fill").style.width = `${(score / currentQuestions.length) * 100}%`;
       const reviewMessage = document.querySelector("#review-message");
       const reviewList = document.querySelector("#review-list");
       reviewList.replaceChildren();
@@ -624,7 +660,7 @@
       let emoji;
       let title;
       let copy;
-      if (score === questions.length) {
+      if (score === currentQuestions.length) {
         emoji = "🏆";
         title = "Cosmic genius!";
         copy = "A perfect flight through the universe. The stars are impressed!";
